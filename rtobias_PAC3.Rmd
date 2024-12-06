@@ -1,0 +1,141 @@
+---
+title: "PAC3 - Models predictius"
+author: "Rafael Tobias Miras"
+date: "2024-12-06"
+output:
+        html_document:
+                toc: true
+                toc_depth: 2
+                toc_float:
+                        collapsed: false
+                        smooth_scroll: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(stats)
+library(kableExtra)
+library(ggplot2)
+library(caret)
+```
+
+# 1. REGRESSIÓ LINEAL.
+
+## 1.1. Estudi de correlació lineal i gràfic de dispersió
+
+Carreguem el fitxer.
+
+```{r carrega}
+astronomy <- read.csv("Astronomy.csv")
+```
+
+Comprovem que no hi hagi valors NA
+
+```{r valors_na}
+sum(is.na(astronomy))
+```
+
+Observem la naturalesa de les dades.
+
+```{r summary}
+summary(astronomy)
+```
+
+### 1.1.1. Correlació lineal
+
+Calculem la matriu de correlació lineal.
+
+```{r matriu_correlacio}
+# Filtrem el df per les variables quantitatives
+astronomy_numerics <- astronomy %>% 
+        select(c(Temperatura, Luminosidad, Radio, Magnitud, Tipo_re))
+
+# Calculem la matiu de correlació
+matriu_correlacio <- cor(astronomy_numerics, method = "pearson")
+
+kable(matriu_correlacio, format = "html", caption = "Taula 1: Matriu de correlació",
+      table.attr = "style='width:30%;'") %>% 
+        kableExtra::kable_styling()
+```
+
+Destacariem:
+
++ Hi ha una forta correlació negativa entre les variables **Tipo_re** i **Magnitud**. A major magnitud, menor tipo_re.
++ Hi ha una correlació moderada negativa entre les variables **Luminosidad** i **Magnitud**. Es a dir que a major magnitud menys lluminositat.
++ Hi ha una correlació moderada positiva entre les variables **Luminosidad** i **Tipo_re**. Es a dir que a major magnitud major tipo_re.
++ Hi ha una correlació moderada negativa entre les variables **Radio** i **Magnitud**. Es a dir que a major radi menys magnitud
++ Hi ha una correlació moderada positiva entre les variables **Radio** i **Tipo_re**. Es a dir que a major radi major tipo_re.
++ No hi ha practicament correlació entre el radi i la temperatura.
+
+
+### 1.1.2. Diagrama HR (Hertzsprung-Russell)
+
+Representem el gràfic de dispersió entre les variables **Temperatura** i **Magnitud**. Per millorar la viasualització he optat per agrupar les dades per colors i formes dels punts per diferenciar el tipus d'estrelles al que pertanyen
+
+```{r scatter_plot}
+ggplot(astronomy, aes(x = Temperatura, y = Magnitud)) +
+        geom_point(aes(color = Tipo_Cat, shape =  Tipo_Cat)) +
+        scale_y_reverse() +
+        labs(title = "Gràfic 1: Diagrama HR de les variables Temperatura i Magnitud",
+             x = "Temperatura",
+             y = "Magnitud") +
+        theme_minimal() +
+        theme( plot.title = element_text(vjust = 2),
+               axis.title.x = element_text(margin = margin(t = 15)), 
+               axis.title.y = element_text(margin = margin(r = 15)))
+```
+
+En el gràfic podem observar com les Nanes marrons son les que tenint major magnitut son les que tenen la temperatura més baixa. Les Nanes vermelles es mouen entre l'interval de magnitut [10,15] però tenen una temperatura molt similar a diferència de les Nanes blanques on la seva temperatura varia molt. Les de tipus Seqüència principal a mesura que tenen més magnitud van augmentant la temperatura. Les Supergegants i Hipergegants tenen una magnitud similar entre elles però la seva temperatura varia molt.
+
+
+## 1.2. Creació de nova variable i generació dels conjunts d'entrenament i de test
+
+Reclassifiquem aquells registres on la variable **Clase_Espectral** tingui valor `G` a valor `K`. La resta de valors d'aquesta estrella romandran igual. Aquests valors es guardaran a la variable **Clase_Espectral**  
+
+```{r reclassificacio}
+astronomy_reclas <- astronomy %>% 
+        mutate(Clase_Espectral = ifelse(Clase_Espectral == "G", "K", Clase_Espectral))
+```
+
+Crearem els dos jocs de dades, el d'entrenament amb el 80% de les dades i el de test amb el 20%
+
+```{r conjunts}
+# El valor de la mostra d'entrenament serà del 80%
+set.seed(123)
+index <- createDataPartition(astronomy_reclas$Tipo_re, p = 0.8, list = FALSE)
+training <- astronomy_reclas[index, ]
+testing <- astronomy_reclas[-index, ]
+
+# Verifiquem que la suma de les observacions per cadascun dels jocs de dades sigui de 240 observacions.
+nrow(training) + nrow(testing)
+```
+
+
+## 1.3. Estimació del model de regressió lineal amb predictors quantitatius
+
+### 1.3.1. Comprovació de colinealitat
+
+## 1.4. Model de regressió lineal (variables quantitatives i qualitatives)
+
+## 1.6. Diagnosi del model
+
+## 1.6. Predicció del model
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
